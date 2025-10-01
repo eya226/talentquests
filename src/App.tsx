@@ -1,64 +1,106 @@
-import React from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { AuthProvider } from './auth/AuthProvider';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
+import { supabase } from './supabaseClient'; // We'll create this next
 
-// Import pages & layouts
-import Layout from './auth/Layout';
-import Login from './pages/Login';
-import Home from './pages/Home';
-import Onboarding from './pages/Onboarding';
-import Quest from './pages/Quest';
-import Jobs from './pages/Jobs';
-import RecruiterDashboard from './pages/RecruiterDashboard';
-import JobApplicants from './pages/JobApplicants';
-import ApplicantProfile from './pages/ApplicantProfile';
-import ProfilePage from './pages/ProfilePage';
+// --- Auth Provider ---
+const AuthContext = createContext(null);
 
+export const AuthProvider = ({ children }) => {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ session, loading }}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => useContext(AuthContext);
+
+// --- Pages ---
+const LoginPage = () => {
+  const { session } = useAuth();
+  const [email, setEmail] = useState('');
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password: 'password' }); // Using a dummy password for simplicity
+      if (error) throw error;
+    } catch (error) {
+      alert(error.error_description || error.message);
+    }
+  };
+
+  if (session) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <form onSubmit={handleLogin}>
+      <h1>Login</h1>
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" />
+      <button type="submit">Log In</button>
+       <p> (Use 'password' as the password for any test user) </p>
+    </form>
+  );
+};
+
+const DashboardPage = () => {
+  const { session } = useAuth();
+  return (
+    <div>
+      <h1>Welcome!</h1>
+      <p>You are logged in as {session?.user?.email}</p>
+      <button onClick={() => supabase.auth.signOut()}>Sign Out</button>
+    </div>
+  );
+};
+
+// --- Layout to protect routes ---
+const ProtectedLayout = () => {
+    const { session } = useAuth();
+
+    if (!session) {
+        return <Navigate to="/login" replace/>;
+    }
+
+    return <Outlet />;
+}
+
+// --- Router ---
 const router = createBrowserRouter([
   {
     path: '/login',
-    element: <Login />,
+    element: <LoginPage />,
   },
   {
     path: '/',
-    element: <Layout />, // The Layout component is the gatekeeper for all protected routes
+    element: <ProtectedLayout />,
     children: [
-      {
-        index: true, // The Home component renders at '/' for logged-in users and handles redirection
-        element: <Home />,
-      },
-      {
-        path: 'onboarding',
-        element: <Onboarding />,
-      },
-      {
-        path: 'profile',
-        element: <ProfilePage />,
-      },
-      {
-        path: 'quest',
-        element: <Quest />,
-      },
-      {
-        path: 'jobs',
-        element: <Jobs />,
-      },
-      {
-        path: 'recruiter-dashboard',
-        element: <RecruiterDashboard />,
-      },
-      {
-        path: 'jobs/:jobId/applicants',
-        element: <JobApplicants />,
-      },
-      {
-        path: 'profile/:applicantId',
-        element: <ApplicantProfile />,
-      },
-    ],
+        {
+            index: true,
+            element: <DashboardPage/>
+        }
+    ]
   },
 ]);
 
+// --- Main App Component ---
 const App = () => {
   return (
     <AuthProvider>
