@@ -10,20 +10,21 @@ const Home = () => {
   }
 
   if (!profile) {
-    // This should be handled by the Root layout, but as a fallback.
-    return <Navigate to="/auth" replace />;
+    // This should theoretically not be hit if Layout works, but as a safeguard.
+    return <Navigate to="/login" replace />;
   }
 
   if (profile.role === 'recruiter') {
     return <Navigate to="/recruiter-dashboard" replace />;
   }
 
-  // Default to student flow. If their profile is built, send them to jobs.
+  // Default to student flow.
+  // If their profile is built (i.e., they have an archetype), send them to the job board.
   if (profile.archetype) {
     return <Navigate to="/jobs" replace />;
   }
 
-  // If they are a new student, send them to onboarding.
+  // If they are a new student without a profile, send them to onboarding.
   return <Navigate to="/onboarding" replace />;
 };
 

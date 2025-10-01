@@ -3,9 +3,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 
 // Import pages & layouts
-import Root from './pages/Root';
+import Layout from './auth/Layout';
+import Login from './pages/Login';
 import Home from './pages/Home';
-import Auth from './pages/Auth';
 import Onboarding from './pages/Onboarding';
 import Quest from './pages/Quest';
 import Jobs from './pages/Jobs';
@@ -16,15 +16,15 @@ import ProfilePage from './pages/ProfilePage';
 
 const router = createBrowserRouter([
   {
-    path: '/auth',
-    element: <Auth />,
+    path: '/login',
+    element: <Login />,
   },
   {
     path: '/',
-    element: <Root />, // The Root component now acts as the gatekeeper
+    element: <Layout />, // The Layout component is the gatekeeper for all protected routes
     children: [
       {
-        index: true, // The Home component will render at the root path and handle redirection
+        index: true, // The Home component renders at '/' for logged-in users and handles redirection
         element: <Home />,
       },
       {
