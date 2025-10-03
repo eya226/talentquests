@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabaseClient';
-import { extractSkills } from '../lib/nlp';
+import { extractSkills, initializeNlpPipeline } from '../lib/nlp';
 import { Session } from '@supabase/supabase-js';
 
 type ConversationStep = 'ASKING_NAME' | 'ASKING_UNIVERSITY' | 'ASKING_SKILLS' | 'CONFIRMATION' | 'COMPLETE';
@@ -13,17 +13,36 @@ const AriaOnboardingPage = () => {
   const { session } = useAuth() as { session: Session | null };
   const navigate = useNavigate();
 
-  const [messages, setMessages] = useState([
-    { from: 'aria', text: "Hello! I'm Aria, your personal guide to TalentQuest. Let's get your profile started. What's your full name?" }
-  ]);
+  const [messages, setMessages] = useState<{from: 'aria' | 'user', text: string}[]>([]);
   const [userInput, setUserInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // For Aria's thinking
   const [conversationStep, setConversationStep] = useState<ConversationStep>('ASKING_NAME');
+
+  // New state for model loading
+  const [modelLoading, setModelLoading] = useState(true);
+  const [modelLoadProgress, setModelLoadProgress] = useState(0);
+  const [modelError, setModelError] = useState<string | null>(null);
 
   // State to hold profile data
   const [name, setName] = useState('');
   const [university, setUniversity] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
+
+  // Effect to pre-load the NLP model
+  useEffect(() => {
+    addMessage('aria', "Please wait a moment while I prepare my AI core...");
+    initializeNlpPipeline((progress: any) => {
+      setModelLoadProgress(Math.round(progress.progress));
+    }).then(() => {
+      setModelLoading(false);
+      addMessage('aria', "I'm ready! Let's get your profile started. What's your full name?");
+    }).catch(error => {
+      console.error("Failed to load NLP model:", error);
+      setModelError("I'm having trouble loading my AI core. Please check your internet connection and refresh the page.");
+      setModelLoading(false);
+    });
+  }, []);
+
 
   const addMessage = (from: 'aria' | 'user', text: string) => {
       setMessages(prev => [...prev, { from, text }]);
@@ -89,7 +108,6 @@ const AriaOnboardingPage = () => {
       case 'CONFIRMATION':
         addMessage('aria', 'Got it. One last check...');
         const finalSkills = await extractSkills(input, candidateSkills);
-        // Combine previously extracted skills with any new ones
         const combinedSkills = Array.from(new Set([...skills, ...finalSkills]));
         setSkills(combinedSkills);
         setConversationStep('COMPLETE');
@@ -102,7 +120,7 @@ const AriaOnboardingPage = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userInput.trim() || loading) return;
+    if (!userInput.trim() || loading || modelLoading || modelError) return;
     processUserInput(userInput);
   };
 
@@ -127,6 +145,8 @@ const AriaOnboardingPage = () => {
             </div>
           ))}
           {loading && <p style={{ textAlign: 'center', fontStyle: 'italic' }}>Aria is thinking...</p>}
+          {modelLoading && <p style={{ textAlign: 'center', fontWeight: 'bold' }}>Aria is preparing... ({modelLoadProgress}%)</p>}
+          {modelError && <p style={{ textAlign: 'center', color: 'red' }}>{modelError}</p>}
         </div>
         <form onSubmit={handleFormSubmit} style={{ display: 'flex', gap: '1rem' }}>
           <input
@@ -135,9 +155,9 @@ const AriaOnboardingPage = () => {
             onChange={(e) => setUserInput(e.target.value)}
             placeholder="Type your message..."
             style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #ccc' }}
-            disabled={loading || conversationStep === 'COMPLETE'}
+            disabled={loading || modelLoading || !!modelError || conversationStep === 'COMPLETE'}
           />
-          <button type="submit" disabled={loading || conversationStep === 'COMPLETE'} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', backgroundColor: '#007bff', color: 'white', cursor: 'pointer' }}>
+          <button type="submit" disabled={loading || modelLoading || !!modelError || conversationStep === 'COMPLETE'} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', backgroundColor: '#007bff', color: 'white', cursor: 'pointer' }}>
             Send
           </button>
         </form>
