@@ -3,32 +3,25 @@ import { Link, Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
 
-const LoginPage = () => {
+const SignUpPage = () => {
   const { session } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     });
     if (error) {
       alert(error.error_description || error.message);
+    } else {
+      alert('Check your email for the login link!');
     }
     setLoading(false);
-  };
-
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
-    if (error) {
-      alert(error.error_description || error.message);
-    }
   };
 
   if (session) {
@@ -37,8 +30,8 @@ const LoginPage = () => {
 
   return (
     <div>
-      <h1>Log In to TalentQuest</h1>
-      <form onSubmit={handleLogin}>
+      <h1>Create Your Account</h1>
+      <form onSubmit={handleSignUp}>
         <div>
           <label htmlFor="email">Email</label>
           <input
@@ -57,23 +50,19 @@ const LoginPage = () => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
+            placeholder="Create a password"
             required
           />
         </div>
         <button type="submit" disabled={loading}>
-          {loading ? 'Logging In...' : 'Log In'}
+          {loading ? 'Signing Up...' : 'Sign Up'}
         </button>
       </form>
-      <hr />
-      <button onClick={handleGoogleLogin} disabled={loading}>
-        Sign in with Google
-      </button>
       <p>
-        Don't have an account? <Link to="/signup">Sign Up</Link>
+        Already have an account? <Link to="/login">Log In</Link>
       </p>
     </div>
   );
 };
 
-export default LoginPage;
+export default SignUpPage;
