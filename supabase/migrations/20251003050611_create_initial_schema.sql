@@ -6,8 +6,25 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   university TEXT,
   skills TEXT[],
   goals TEXT,
-  vision_board JSONB
+  vision_board JSONB,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create a function to automatically update the 'updated_at' timestamp.
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create a trigger to call the function before any update on the 'profiles' table.
+CREATE TRIGGER on_profiles_updated
+BEFORE UPDATE ON public.profiles
+FOR EACH ROW
+EXECUTE PROCEDURE public.handle_updated_at();
+
 
 -- Create the 'achievements' table to store all possible game achievements.
 CREATE TABLE IF NOT EXISTS public.achievements (

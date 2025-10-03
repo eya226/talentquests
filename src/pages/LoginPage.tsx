@@ -38,16 +38,16 @@ const LoginPage = () => {
     <div style={{ maxWidth: '400px', margin: '50px auto' }}>
       <Card>
         <form onSubmit={handleLogin}>
-          <h1>TalentQuest Login</h1>
-          <div style={{ marginBottom: '10px' }}>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" data-testid="email-input" style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/>
+          <h1 style={{ textAlign: 'center' }}>TalentQuest</h1>
+          <div style={{ marginBottom: '1rem' }}>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/>
           </div>
           <Button type="submit" style={{ width: '100%' }}>
             Log In with Email
           </Button>
-          <p style={{ textAlign: 'center' }}>(Use 'password' as the password for any test user)</p>
+          <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#6c757d' }}>(Use 'password' as the password for any test user)</p>
         </form>
-        <hr style={{ margin: '20px 0' }} />
+        <hr style={{ margin: '1rem 0' }} />
         <Button onClick={handleGoogleLogin} variant="secondary" style={{ width: '100%' }}>
           Sign in with Google
         </Button>

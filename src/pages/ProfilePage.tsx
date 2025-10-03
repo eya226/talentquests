@@ -3,9 +3,10 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { Session } from '@supabase/supabase-js';
 
 const ProfilePage = () => {
-  const { session } = useAuth();
+  const { session } = useAuth() as { session: Session | null };
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [university, setUniversity] = useState('');
@@ -72,26 +73,27 @@ const ProfilePage = () => {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h1>Your Profile</h1>
       <Card>
+        <h1>Your Profile</h1>
+        <p>This is where you can build your TalentQuest identity.</p>
         {loading ? (
-          <p>Loading...</p>
+          <p>Loading your profile...</p>
         ) : (
-          <form onSubmit={handleUpdateProfile}>
+          <form onSubmit={handleUpdateProfile} style={{ marginTop: '1.5rem' }}>
             <div style={{ marginBottom: '1rem' }}>
-              <label htmlFor="name">Name</label>
+              <label htmlFor="name" style={{ display: 'block', marginBottom: '0.5rem' }}>Name</label>
               <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/>
             </div>
             <div style={{ marginBottom: '1rem' }}>
-              <label htmlFor="university">University</label>
+              <label htmlFor="university" style={{ display: 'block', marginBottom: '0.5rem' }}>University</label>
               <input id="university" type="text" value={university} onChange={(e) => setUniversity(e.target.value)} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/>
             </div>
             <div style={{ marginBottom: '1rem' }}>
-              <label htmlFor="skills">Skills (comma-separated)</label>
+              <label htmlFor="skills" style={{ display: 'block', marginBottom: '0.5rem' }}>Skills (comma-separated)</label>
               <input id="skills" type="text" value={skills.join(', ')} onChange={(e) => setSkills(e.target.value.split(',').map(s => s.trim()))} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/>
             </div>
             <div style={{ marginBottom: '1rem' }}>
-              <label htmlFor="goals">Your Goals</label>
+              <label htmlFor="goals" style={{ display: 'block', marginBottom: '0.5rem' }}>Your Career Goals</label>
               <textarea id="goals" value={goals} onChange={(e) => setGoals(e.target.value)} style={{ width: '100%', padding: '8px', boxSizing: 'border-box', minHeight: '100px' }}/>
             </div>
             <div>

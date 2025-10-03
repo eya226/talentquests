@@ -16,8 +16,8 @@ const Navbar = () => {
       <div className="navbar-links">
         {session ? (
           <>
-            <Link to="/" style={{ textDecoration: 'none', color: '#333' }}>Dashboard</Link>
-            <Link to="/profile" style={{ textDecoration: 'none', color: '#333' }}>Profile</Link>
+            <Link to="/" style={{ textDecoration: 'none', color: '#333', fontWeight: 500 }}>Dashboard</Link>
+            <Link to="/profile" style={{ textDecoration: 'none', color: '#333', fontWeight: 500 }}>Profile</Link>
             <span style={{ fontStyle: 'italic' }}>{session.user.email}</span>
             <Button onClick={() => supabase.auth.signOut()} variant="secondary">
               Sign Out
