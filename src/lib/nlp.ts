@@ -7,8 +7,7 @@ import { pipeline, Pipeline } from '@xenova/transformers';
 class NlpPipeline {
     private static instance: Pipeline | null = null;
     private static task: string = 'zero-shot-classification';
-    // IMPORTANT: Changed model path to load from the local 'public' directory.
-    private static model: string = '/models/bart-large-mnli/';
+    private static model: string = 'Xenova/bart-large-mnli'; // Reverted to loading from the hub
     private static loadingPromise: Promise<Pipeline> | null = null;
 
     static getInstance(progress_callback?: (progress: any) => void): Promise<Pipeline> {
@@ -20,7 +19,6 @@ class NlpPipeline {
             return this.loadingPromise;
         }
 
-        // The `pipeline` function will now load the model from the local path.
         this.loadingPromise = pipeline(this.task, this.model, {
             progress_callback,
         }).then(instance => {
@@ -47,23 +45,10 @@ export const extractSkills = async (text: string, candidateSkills: string[]): Pr
         const classifier = await NlpPipeline.getInstance();
         const output = await classifier(text, candidateSkills, { multi_label: true });
 
-        // Filter skills with a confidence score above a certain threshold.
         const threshold = 0.8;
-        // The output structure might be slightly different for some models, ensure it's handled correctly.
-        const results = Array.isArray(output) ? output : [output];
-        const skills: string[] = [];
+        const skills = output.labels.filter((_, i) => output.scores[i] > threshold);
 
-        for (const result of results) {
-            if (result.scores) {
-                result.labels.forEach((label, i) => {
-                    if (result.scores[i] > threshold) {
-                        skills.push(label);
-                    }
-                });
-            }
-        }
-
-        return Array.from(new Set(skills)); // Return unique skills
+        return skills;
     } catch (error) {
         console.error("Skill extraction failed:", error);
         return [];
