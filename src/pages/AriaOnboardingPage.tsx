@@ -7,8 +7,6 @@ import { Session } from '@supabase/supabase-js';
 
 type ConversationStep = 'ASKING_NAME' | 'ASKING_UNIVERSITY' | 'ASKING_SKILLS' | 'CONFIRMATION' | 'COMPLETE';
 
-const candidateSkills = ['React', 'Node.js', 'Python', 'JavaScript', 'TypeScript', 'Vue', 'Angular', 'HTML', 'CSS', 'SQL', 'MongoDB', 'Firebase', 'Supabase', 'Docker', 'Kubernetes', 'AWS', 'Google Cloud', 'Azure', 'Machine Learning', 'Data Science', 'UI/UX Design', 'Figma', 'Project Management'];
-
 const AriaOnboardingPage = () => {
   const { session } = useAuth() as { session: Session | null };
   const navigate = useNavigate();
@@ -27,20 +25,44 @@ const AriaOnboardingPage = () => {
   const [name, setName] = useState('');
   const [university, setUniversity] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
+  const [candidateSkills, setCandidateSkills] = useState<string[]>([]);
 
-  // Effect to pre-load the NLP model
+
+  // Effect to pre-load the NLP model and fetch skills
   useEffect(() => {
-    addMessage('aria', "Please wait a moment while I prepare my AI core...");
-    initializeNlpPipeline((progress: any) => {
-      setModelLoadProgress(Math.round(progress.progress));
-    }).then(() => {
-      setModelLoading(false);
-      addMessage('aria', "I'm ready! Let's get your profile started. What's your full name?");
-    }).catch(error => {
-      console.error("Failed to load NLP model:", error);
-      setModelError("I'm having trouble loading my AI core. Please check your internet connection and refresh the page.");
-      setModelLoading(false);
-    });
+    const initialize = async () => {
+      try {
+        addMessage('aria', "Please wait a moment while I prepare my AI core...");
+        await initializeNlpPipeline((progress: any) => {
+          setModelLoadProgress(Math.round(progress.progress));
+        });
+        setModelLoading(false); // NLP model is loaded
+
+        addMessage('aria', "Just a second more, I'm fetching the latest list of available skills...");
+
+        const { data: skillsData, error: skillsError } = await supabase
+          .from('skills')
+          .select('name');
+
+        if (skillsError) {
+          console.error("Error fetching skills:", skillsError);
+          throw new Error("Failed to fetch skills list.");
+        }
+
+        if (skillsData) {
+            setCandidateSkills(skillsData.map(s => s.name));
+        }
+
+        addMessage('aria', "I'm ready! Let's get your profile started. What's your full name?");
+
+      } catch (error) {
+        console.error("Initialization failed:", error);
+        setModelError("I'm having trouble with my initial setup. Please check your internet connection and refresh the page.");
+        setModelLoading(false); // Ensure loading is off on error
+      }
+    };
+
+    initialize();
   }, []);
 
 
