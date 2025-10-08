@@ -1,37 +1,17 @@
-import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../lib/supabaseClient';
-import { Session } from '@supabase/supabase-js';
 
+/**
+ * This is a temporary layout that only checks for authentication.
+ * The onboarding check has been removed to prevent the application from crashing
+ * due to the missing 'profiles' table on the user's end.
+ *
+ * This allows the user to access the main application while the database setup is pending.
+ */
 const ProtectedLayout = () => {
-    const { session, loading: authLoading } = useAuth() as { session: Session | null; loading: boolean };
-    const [profile, setProfile] = useState<any>(null);
-    const [profileLoading, setProfileLoading] = useState(true);
+    const { session, loading } = useAuth();
 
-    useEffect(() => {
-        if (session?.user) {
-            const fetchProfile = async () => {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('onboarding_complete')
-                    .eq('id', session.user.id)
-                    .single();
-
-                if (error && error.code !== 'PGRST116') { // PGRST116: no rows found
-                    console.error('Error fetching profile:', error);
-                }
-
-                setProfile(data);
-                setProfileLoading(false);
-            };
-            fetchProfile();
-        } else if (!authLoading) {
-            setProfileLoading(false);
-        }
-    }, [session, authLoading]);
-
-    if (authLoading || profileLoading) {
+    if (loading) {
         return <div>Loading...</div>;
     }
 
@@ -39,9 +19,11 @@ const ProtectedLayout = () => {
         return <Navigate to="/signup" replace />;
     }
 
-    if (!profile?.onboarding_complete) {
-        return <Navigate to="/onboarding" replace />;
-    }
+    // Temporarily removed the onboarding check to prevent crashes.
+    // The original logic was:
+    // if (!profile?.onboarding_complete) {
+    //     return <Navigate to="/onboarding" replace />;
+    // }
 
     return <Outlet />;
 }
