@@ -1,11 +1,11 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
-import LoginPage from './pages/LoginPage';
-import SignUpPage from './pages/SignUpPage';
-import DashboardPage from './pages/DashboardPage';
-import AriaOnboardingPage from './pages/AriaOnboardingPage';
+import LoginPage from './features/auth/LoginPage';
+import SignUpPage from './features/auth/SignUpPage';
+import DashboardPage from './features/dashboard/DashboardPage';
+import AIChatFlow from './features/onboarding/AIChatFlow';
 import ProtectedLayout from './components/ProtectedLayout';
-import AuthGuard from './components/AuthGuard';
+import AuthGuard from './features/auth/AuthGuard';
 
 // --- Router ---
 const router = createBrowserRouter([
@@ -23,7 +23,7 @@ const router = createBrowserRouter([
     children: [
         {
             index: true,
-            element: <AriaOnboardingPage />
+            element: <AIChatFlow />
         }
     ]
   },

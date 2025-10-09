@@ -1,25 +1,44 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
-import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../hooks/useAuth';
 
 const SignUpPage = () => {
   const { session } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'student' | 'recruiter'>('student');
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
     });
-    if (error) {
-      alert(error.error_description || error.message);
-    } else {
-      alert('Check your email for the login link!');
+
+    if (authError) {
+      alert(authError.error_description || authError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (authData.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          role: role,
+          name: email.split('@')[0], // Default name to email prefix
+        });
+
+      if (profileError) {
+        alert(`Error creating profile: ${profileError.message}`);
+      } else {
+        alert('Success! Check your email for the confirmation link.');
+      }
     }
     setLoading(false);
   };
@@ -53,6 +72,18 @@ const SignUpPage = () => {
             placeholder="Create a password"
             required
           />
+        </div>
+        <div>
+          <label htmlFor="role">I am a:</label>
+          <select
+            id="role"
+            value={role}
+            onChange={(e) => setRole(e.target.value as 'student' | 'recruiter')}
+            required
+          >
+            <option value="student">Student</option>
+            <option value="recruiter">Recruiter</option>
+          </select>
         </div>
         <button type="submit" disabled={loading}>
           {loading ? 'Signing Up...' : 'Sign Up'}

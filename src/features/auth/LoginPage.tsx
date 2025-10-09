@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
-import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../hooks/useAuth';
 
 const LoginPage = () => {
   const { session } = useAuth();
