@@ -8,26 +8,12 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ value }) => {
   const progress = Math.min(Math.max(value, 0), 100); // Clamp value between 0 and 100
 
   return (
-    <div style={{
-      width: '100%',
-      backgroundColor: '#374151', // gray-700
-      borderRadius: '9999px',
-      height: '20px',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        width: `${progress}%`,
-        backgroundColor: '#6D28D9', // Quantum Purple
-        height: '100%',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'width 0.5s ease-in-out',
-        fontSize: '12px',
-        fontWeight: 'bold',
-      }}>
-        {`${progress}%`}
+    <div className="w-full bg-gray-dark rounded-full h-5 overflow-hidden">
+      <div
+        className="bg-quantum-purple h-full flex items-center justify-center text-xs font-bold text-white transition-all duration-500 ease-in-out"
+        style={{ width: `${progress}%` }}
+      >
+        {`${progress.toFixed(0)}%`}
       </div>
     </div>
   );

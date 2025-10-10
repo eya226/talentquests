@@ -9,14 +9,9 @@ const QuestLog: React.FC = () => {
       buttonText="Start First Quest"
       onButtonClick={() => alert('Quest system coming in Phase 2!')}
     >
-      <div style={{
-        backgroundColor: '#1F2937', // Dark Matter
-        padding: '12px',
-        borderRadius: '8px',
-        marginBottom: '16px'
-      }}>
-        <h4 style={{ margin: 0, marginBottom: '8px', color: '#E5E7EB' }}>Rewards:</h4>
-        <ul style={{ margin: 0, paddingLeft: '20px', color: '#D1D5DB' }}>
+      <div className="bg-dark-matter p-3 rounded-lg mb-4">
+        <h4 className="m-0 mb-2 text-gray-200 font-semibold">Rewards:</h4>
+        <ul className="m-0 pl-5 text-gray-light list-disc">
           <li>+250 XP</li>
           <li>"Bug Squasher" Title</li>
           <li>Access to the QA Guild</li>

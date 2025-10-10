@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabaseClient';
@@ -21,10 +21,37 @@ const recruiterQuestions = [
     "What’s the biggest challenge your team is facing right now?"
 ];
 
+// --- Helper function for simplified NLP ---
+const generatePersonalityTags = (answers: string[]): string[] => {
+    const tags = new Set<string>();
+    const text = answers.join(' ').toLowerCase();
+
+    const keywordMap: { [key: string]: string } = {
+        'team': 'Collaborative', 'collaborate': 'Collaborative', 'together': 'Collaborative',
+        'debug': 'Problem-Solver', 'fix': 'Problem-Solver', 'problem': 'Problem-Solver', 'solve': 'Problem-Solver',
+        'learn': 'Curious', 'new': 'Curious', 'research': 'Curious',
+        'build': 'Builder', 'create': 'Builder', 'develop': 'Builder',
+        'lead': 'Leader', 'manage': 'Leader', 'mentor': 'Leader',
+        'fast': 'Agile', 'speed': 'Agile', 'quick': 'Agile',
+        'quality': 'Detail-Oriented', 'test': 'Detail-Oriented', 'robust': 'Detail-Oriented', 'clean': 'Detail-Oriented'
+    };
+
+    for (const keyword in keywordMap) {
+        if (text.includes(keyword)) {
+            tags.add(keywordMap[keyword]);
+        }
+    }
+
+    if (tags.size === 0) return ['Proactive']; // Default tag if no keywords match
+    return Array.from(tags);
+};
+
+
 const AIChatFlow = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { unlockAchievement } = useGameStore();
+  const chatWindowRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<{from: 'aria' | 'user', text: string}[]>([]);
   const [userInput, setUserInput] = useState('');
@@ -35,18 +62,17 @@ const AIChatFlow = () => {
 
   const questions = profile?.role === 'recruiter' ? recruiterQuestions : studentQuestions;
 
-  // --- Effects ---
   useEffect(() => {
-    // Initial greeting from Aria
     addMessage('aria', "Hi, I’m Aria. Let’s build your digital identity — in just a few questions.");
     setTimeout(() => {
-        if (questions.length > 0) {
-            addMessage('aria', questions[0]);
-        }
+        if (questions.length > 0) addMessage('aria', questions[0]);
     }, 1000);
   }, []);
 
-  // --- Helper Functions ---
+  useEffect(() => {
+    if (chatWindowRef.current) chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+  }, [messages]);
+
   const addMessage = (from: 'aria' | 'user', text: string) => {
       setMessages(prev => [...prev, { from, text }]);
   };
@@ -56,25 +82,16 @@ const AIChatFlow = () => {
     setLoading(true);
     addMessage('aria', 'Perfect! I\'m analyzing your responses and building your profile...');
 
-    // Simplified profile generation
+    // Dynamic profile generation
     const name = finalAnswers[0] || profile?.name || 'New Adventurer';
     const university = profile?.role === 'student' ? (finalAnswers[1] || '') : undefined;
-
-    const personality_tags = ['Curious', 'Resilient']; // Default tags
-    const archetype = "Full-Stack Builder"; // Default archetype
+    const personality_tags = generatePersonalityTags(finalAnswers);
+    const archetype = "Full-Stack Builder"; // Default archetype for now
     const vision_board = { dream_company: "InstaDeep", target_salary: 4000 }; // Default vision board
 
     const { error } = await supabase
       .from('profiles')
-      .update({
-        name,
-        university,
-        archetype,
-        personality_tags,
-        vision_board,
-        onboarding_complete: true,
-        updated_at: new Date(),
-      })
+      .update({ name, university, archetype, personality_tags, vision_board, onboarding_complete: true, updated_at: new Date() })
       .eq('id', user.id);
 
     if (error) {
@@ -82,8 +99,8 @@ const AIChatFlow = () => {
       console.error('Error saving profile:', error);
     } else {
       unlockAchievement('chat_complete');
-      addMessage('aria', 'All done! Your initial profile is set up. Redirecting you to your dashboard...');
-      setTimeout(() => navigate('/'), 2500);
+      addMessage('aria', `I've updated your profile with these traits: ${personality_tags.join(', ')}. Redirecting you to your dashboard...`);
+      setTimeout(() => navigate('/'), 3000);
     }
     setLoading(false);
   };
@@ -92,13 +109,9 @@ const AIChatFlow = () => {
     addMessage('user', input);
     setUserInput('');
     setLoading(true);
-
     const newAnswers = [...answers, input];
     setAnswers(newAnswers);
-
     const nextQuestionIndex = currentQuestionIndex + 1;
-
-    // Wait a moment before Aria responds
     setTimeout(async () => {
         if (nextQuestionIndex < questions.length) {
             setCurrentQuestionIndex(nextQuestionIndex);
@@ -117,42 +130,37 @@ const AIChatFlow = () => {
     processUserInput(userInput);
   };
 
-  // --- Render ---
   return (
-    <div style={{ maxWidth: '800px', margin: '50px auto', padding: '2rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h1>Chat with Aria</h1>
-            <p>Let's build your digital identity.</p>
-        </div>
-        <div className="chat-window" style={{ height: '400px', overflowY: 'auto', border: '1px solid #eee', padding: '1rem', marginBottom: '1rem', borderRadius: '8px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)' }}>
-          {messages.map((msg, index) => (
-            <div key={index} className={`chat-message ${msg.from}`} style={{ marginBottom: '1rem', display: 'flex', justifyContent: msg.from === 'aria' ? 'flex-start' : 'flex-end' }}>
-              <div style={{
-                maxWidth: '70%',
-                padding: '0.75rem 1rem',
-                borderRadius: '18px',
-                backgroundColor: msg.from === 'aria' ? '#f1f1f1' : '#007bff',
-                color: msg.from === 'aria' ? '#000' : '#fff',
-              }}>
-                <p style={{ margin: 0 }}>{msg.text}</p>
+    <div className="bg-gray-darkest min-h-screen flex items-center justify-center font-sans">
+      <div className="max-w-3xl w-full mx-auto my-12 p-8 bg-dark-matter rounded-xl shadow-2xl">
+          <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-white">Chat with Aria</h1>
+              <p className="text-gray-light">Let's build your digital identity.</p>
+          </div>
+          <div ref={chatWindowRef} className="h-96 overflow-y-auto p-4 mb-4 rounded-lg shadow-inner bg-gray-darkest space-y-4">
+            {messages.map((msg, index) => (
+              <div key={index} className={`flex ${msg.from === 'aria' ? 'justify-start' : 'justify-end'}`}>
+                <div className={`max-w-[70%] py-2 px-4 rounded-2xl ${msg.from === 'aria' ? 'bg-gray-dark text-white' : 'bg-quantum-purple text-white'}`}>
+                  <p className="m-0">{msg.text}</p>
+                </div>
               </div>
-            </div>
-          ))}
-          {loading && <p style={{ textAlign: 'center', fontStyle: 'italic' }}>Aria is thinking...</p>}
-        </div>
-        <form onSubmit={handleFormSubmit} style={{ display: 'flex', gap: '1rem' }}>
-          <input
-            type="text"
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            placeholder="Type your message..."
-            style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #ccc' }}
-            disabled={loading || isComplete}
-          />
-          <button type="submit" disabled={loading || isComplete} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', backgroundColor: '#007bff', color: 'white', cursor: 'pointer' }}>
-            Send
-          </button>
-        </form>
+            ))}
+            {loading && <p className="text-center italic text-gray-light">Aria is thinking...</p>}
+          </div>
+          <form onSubmit={handleFormSubmit} className="flex gap-4">
+            <input
+              type="text"
+              value={userInput}
+              onChange={(e) => setUserInput(e.target.value)}
+              placeholder="Type your message..."
+              className="flex-1 p-3 rounded-lg border border-gray-medium bg-gray-dark text-white placeholder-gray-light focus:ring-2 focus:ring-quantum-purple focus:border-transparent outline-none disabled:opacity-50"
+              disabled={loading || isComplete}
+            />
+            <button type="submit" disabled={loading || isComplete} className="py-3 px-6 rounded-lg border-none bg-quantum-purple text-white font-semibold cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              Send
+            </button>
+          </form>
+      </div>
     </div>
   );
 };

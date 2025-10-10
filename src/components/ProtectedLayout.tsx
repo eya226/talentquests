@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import Navbar from './Navbar';
 
 const ProtectedLayout = () => {
     const { session, profile, loading } = useAuth();
@@ -12,7 +13,6 @@ const ProtectedLayout = () => {
         return <Navigate to="/login" replace />;
     }
 
-    // Now that the profile is available, we can check the onboarding status.
     // A profile exists but onboarding is not complete
     if (profile && !profile.onboarding_complete) {
         return <Navigate to="/onboarding" replace />;
@@ -24,8 +24,16 @@ const ProtectedLayout = () => {
         return <Navigate to="/onboarding" replace />;
     }
 
-    // If session and profile are valid, and onboarding is complete, render the main content.
-    return <Outlet />;
+    // If session and profile are valid, and onboarding is complete, render the main content
+    // wrapped with the Navbar.
+    return (
+        <div>
+            <Navbar />
+            <main>
+                <Outlet />
+            </main>
+        </div>
+    );
 }
 
 export default ProtectedLayout;

@@ -38,33 +38,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSessionAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-
-      if (session?.user) {
-        const { data: profileData, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        // 'PGRST116' is the code for 'no rows found', which is expected if the profile hasn't been created yet.
-        if (error && error.code !== 'PGRST116') {
-          console.error("Error fetching profile:", error);
-        } else if (profileData) {
-          setProfile(profileData as Profile);
-        }
-      }
-      setLoading(false);
-    };
-
-    fetchSessionAndProfile();
-
+    // onAuthStateChange fires immediately with the initial session state,
+    // so we don't need a separate getSession() call. This simplifies the logic
+    // and prevents race conditions.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setProfile(null);
       setLoading(true);
+      setSession(session);
+      setProfile(null); // Reset profile on auth change
 
       if (session?.user) {
          const { data: profileData, error } = await supabase
@@ -73,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .eq('id', session.user.id)
           .single();
 
+        // 'PGRST116' is the code for 'no rows found', which is expected if the profile hasn't been created yet.
         if (error && error.code !== 'PGRST116') {
           console.error("Error fetching profile on auth state change:", error);
         } else if (profileData) {
@@ -82,7 +63,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const value = {
@@ -92,6 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loading
   };
 
+  // Render children only when the initial loading is complete
   return (
     <AuthContext.Provider value={value}>
       {!loading && children}

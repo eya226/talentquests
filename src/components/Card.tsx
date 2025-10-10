@@ -10,43 +10,18 @@ interface CardProps {
 
 const Card: React.FC<CardProps> = ({ title, description, buttonText, onButtonClick, children }) => {
   return (
-    <div style={{
-      backgroundColor: '#374151', // gray-700
-      borderRadius: '12px',
-      padding: '24px',
-      border: '1px solid #4B5563', // gray-600
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-      color: '#F9FAFB', // gray-50
-    }}>
-      <h3 style={{
-        fontSize: '20px',
-        fontWeight: 'bold',
-        marginBottom: '12px',
-        color: '#FFFFFF',
-      }}>
+    <div className="bg-gray-dark rounded-xl p-6 border border-gray-medium shadow-md text-gray-50">
+      <h3 className="text-xl font-bold mb-3 text-white">
         {title}
       </h3>
-      <p style={{
-        marginBottom: '16px',
-        color: '#D1D5DB', // gray-300
-      }}>
+      <p className="mb-4 text-gray-light">
         {description}
       </p>
       {children}
       {buttonText && onButtonClick && (
         <button
           onClick={onButtonClick}
-          style={{
-            width: '100%',
-            padding: '12px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: '#6D28D9', // Quantum Purple
-            color: 'white',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            marginTop: '16px',
-          }}
+          className="w-full py-3 px-4 mt-4 rounded-lg bg-quantum-purple text-white font-bold cursor-pointer hover:bg-purple-700 transition-colors"
         >
           {buttonText}
         </button>

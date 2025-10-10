@@ -11,27 +11,15 @@ const GameStats: React.FC = () => {
   const xpInCurrentLevel = xp % xpForNextLevel;
 
   return (
-    <div style={{
-      backgroundColor: '#1F2937', // Dark Matter
-      padding: '20px',
-      borderRadius: '12px',
-      color: 'white',
-      border: '1px solid #4B5563'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>{profile?.name || 'Adventurer'}</h2>
-        <div style={{
-            backgroundColor: '#6D28D9', // Quantum Purple
-            padding: '8px 16px',
-            borderRadius: '16px',
-            fontWeight: 'bold',
-            fontSize: '18px'
-        }}>
+    <div className="bg-dark-matter p-5 rounded-xl text-white border border-gray-medium">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">{profile?.name || 'Adventurer'}</h2>
+        <div className="bg-quantum-purple py-2 px-4 rounded-full font-bold text-lg">
           Level {level}
         </div>
       </div>
       <div>
-        <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#9CA3AF' }}>
+        <div className="mb-2 flex justify-between text-sm text-gray-400">
             <span>Experience Points</span>
             <span>{xp} / {level * xpForNextLevel}</span>
         </div>
