@@ -1,12 +1,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
-import { supabase } from './supabaseClient'; // We'll create this next
+import { supabase } from './supabaseClient';
+import LoginPage from './features/auth/pages/LoginPage';
+import OnboardingPage from './features/onboarding/pages/OnboardingPage';
+import DashboardPage from './features/dashboard/pages/DashboardPage';
+import ProfilePage from './features/profile/pages/ProfilePage';
 
 // --- Auth Provider ---
-const AuthContext = createContext(null);
+const AuthContext = createContext<{ session: any; loading: boolean } | null>(null);
 
-export const AuthProvider = ({ children }) => {
-  const [session, setSession] = useState(null);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,56 +33,25 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
-
-// --- Pages ---
-const LoginPage = () => {
-  const { session } = useAuth();
-  const [email, setEmail] = useState('');
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password: 'password' }); // Using a dummy password for simplicity
-      if (error) throw error;
-    } catch (error) {
-      alert(error.error_description || error.message);
-    }
-  };
-
-  if (session) {
-    return <Navigate to="/" replace />;
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-
-  return (
-    <form onSubmit={handleLogin}>
-      <h1>Login</h1>
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" />
-      <button type="submit">Log In</button>
-       <p> (Use 'password' as the password for any test user) </p>
-    </form>
-  );
+  return context;
 };
 
-const DashboardPage = () => {
-  const { session } = useAuth();
-  return (
-    <div>
-      <h1>Welcome!</h1>
-      <p>You are logged in as {session?.user?.email}</p>
-      <button onClick={() => supabase.auth.signOut()}>Sign Out</button>
-    </div>
-  );
-};
+// --- Placeholder Pages ---
+const QuestsPage = () => <div className="text-white">Quests Page - Coming Soon!</div>;
+const NetworkPage = () => <div className="text-white">Network Page - Coming Soon!</div>;
+
 
 // --- Layout to protect routes ---
 const ProtectedLayout = () => {
     const { session } = useAuth();
-
     if (!session) {
-        return <Navigate to="/login" replace/>;
+        return <Navigate to="/login" replace />;
     }
-
     return <Outlet />;
 }
 
@@ -94,7 +67,27 @@ const router = createBrowserRouter([
     children: [
         {
             index: true,
-            element: <DashboardPage/>
+            element: <Navigate to="/dashboard" replace />
+        },
+        {
+            path: 'onboarding',
+            element: <OnboardingPage />
+        },
+        {
+            path: 'dashboard',
+            element: <DashboardPage />
+        },
+        {
+            path: 'profile',
+            element: <ProfilePage />
+        },
+        {
+            path: 'quests',
+            element: <QuestsPage />
+        },
+        {
+            path: 'network',
+            element: <NetworkPage />
         }
     ]
   },
