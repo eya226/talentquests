@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const apiClient = axios.create({
   baseURL: 'http://localhost:5000/api', // The base URL for our backend
@@ -9,8 +10,8 @@ const apiClient = axios.create({
 
 // Add a request interceptor to include the token in the headers
 apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
+  async (config) => {
+    const token = await AsyncStorage.getItem('token');
     if (token) {
       config.headers['x-auth-token'] = token;
     }
